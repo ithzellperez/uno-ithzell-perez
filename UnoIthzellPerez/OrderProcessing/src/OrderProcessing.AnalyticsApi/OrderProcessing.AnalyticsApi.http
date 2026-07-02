@@ -1,0 +1,11 @@
+@UnoIthzellPerez_AnalyticsApi = http://localhost:5003
+
+GET {{UnoIthzellPerez_AnalyticsApi}}/api/analytics/daily-sales?days=30
+
+###
+
+GET {{UnoIthzellPerez_AnalyticsApi}}/api/analytics/top-products?limit=5
+
+###
+
+GET {{UnoIthzellPerez_AnalyticsApi}}/health

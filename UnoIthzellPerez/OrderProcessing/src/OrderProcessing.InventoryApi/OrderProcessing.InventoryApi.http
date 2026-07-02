@@ -1,0 +1,7 @@
+@UnoIthzellPerez_InventoryApi = http://localhost:5002
+
+GET {{UnoIthzellPerez_InventoryApi}}/api/inventory/1
+
+###
+
+GET {{UnoIthzellPerez_InventoryApi}}/health

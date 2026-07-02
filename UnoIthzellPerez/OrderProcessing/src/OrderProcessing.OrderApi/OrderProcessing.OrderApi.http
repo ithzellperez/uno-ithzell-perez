@@ -1,0 +1,11 @@
+@UnoIthzellPerez_OrderApi = http://localhost:5001
+
+GET {{UnoIthzellPerez_OrderApi}}/api/orders/ping
+
+###
+
+GET {{UnoIthzellPerez_OrderApi}}/api/orders?status=Pending
+
+###
+
+GET {{UnoIthzellPerez_OrderApi}}/health

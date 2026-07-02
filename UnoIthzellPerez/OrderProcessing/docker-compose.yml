@@ -1,0 +1,82 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Password123"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Password123" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  inventory-api:
+    build:
+      context: .
+      dockerfile: src/OrderProcessing.InventoryApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__OrderDb: "Server=sqlserver,1433;Database=OrderProcessing;User Id=sa;Password=Password123;TrustServerCertificate=True"
+    ports:
+      - "5002:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  analytics-api:
+    build:
+      context: .
+      dockerfile: src/OrderProcessing.AnalyticsApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__MongoDb: "mongodb://mongodb:27017"
+      ConnectionStrings__Redis: "redis:6379"
+    ports:
+      - "5003:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  order-api:
+    build:
+      context: .
+      dockerfile: src/OrderProcessing.OrderApi/Dockerfile
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__OrderDb: "Server=sqlserver,1433;Database=OrderProcessing;User Id=sa;Password=Password123;TrustServerCertificate=True"
+      Services__InventoryApi: "http://inventory-api:8080"
+      Services__AnalyticsApi: "http://analytics-api:8080"
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      inventory-api:
+        condition: service_started
+      analytics-api:
+        condition: service_started
